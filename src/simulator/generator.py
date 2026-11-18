@@ -1,11 +1,33 @@
 import copy
 import random
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
 from src.simulator.topology import CAMPUS_DEVICES, NetworkDevice
 
 WIB_OFFSET = timedelta(hours=7)
+
+
+def is_flash_crowd_active(
+    elapsed_sec: float,
+    ts_utc: datetime,
+    flag_path: Path,
+    every_min: float = 20.0,
+    duration_min: float = 5.0,
+) -> bool:
+    """Return True if manual flag, daily KRS window (10:00-10:15 WIB), or periodic schedule is active."""
+    if flag_path.exists():
+        return True
+    wib = ts_utc + WIB_OFFSET
+    if wib.hour == 10 and 0 <= wib.minute < 15:
+        return True
+    if every_min > 0 and duration_min > 0:
+        period_sec = every_min * 60.0
+        dur_sec = min(duration_min * 60.0, period_sec)
+        phase = elapsed_sec % period_sec
+        return phase >= (period_sec - dur_sec)
+    return False
 
 
 class TelemetrySimulator:

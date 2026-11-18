@@ -1,7 +1,9 @@
+import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 
-from src.simulator.generator import TelemetrySimulator
+from src.simulator.generator import TelemetrySimulator, is_flash_crowd_active
 from src.simulator.topology import CAMPUS_DEVICES, get_building_ids
 
 
@@ -83,6 +85,20 @@ class TestTelemetrySimulator(unittest.TestCase):
         }
         self.assertEqual(injected_types, expected_types)
         self.assertGreater(len(all_events), 0)
+
+    def test_periodic_and_manual_flash_crowd_schedule(self) -> None:
+        ts_normal = datetime(2026, 11, 18, 12, 0, 0, tzinfo=timezone.utc)  # 19:00 WIB
+        with tempfile.TemporaryDirectory() as tmpdir:
+            flag_path = Path(tmpdir) / "flash_crowd.flag"
+            # Warm-up window: first 15 min of a 20-min cycle (5-min duration) is False
+            self.assertFalse(is_flash_crowd_active(60.0, ts_normal, flag_path, every_min=20, duration_min=5))
+            # Last 5 min of the 20-min cycle (15*60 = 900s .. 1199s) is True
+            self.assertTrue(is_flash_crowd_active(905.0, ts_normal, flag_path, every_min=20, duration_min=5))
+            # Disabled when every_min=0
+            self.assertFalse(is_flash_crowd_active(905.0, ts_normal, flag_path, every_min=0, duration_min=5))
+            # Manual flag file overrides schedule even when disabled
+            flag_path.write_text("on", encoding="utf-8")
+            self.assertTrue(is_flash_crowd_active(60.0, ts_normal, flag_path, every_min=0, duration_min=5))
 
 
 if __name__ == "__main__":

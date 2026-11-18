@@ -128,6 +128,8 @@ services:
       SIM_INTERVAL_SEC: ${SIM_INTERVAL_SEC:-1.0}
       SIM_BACKFILL_DAYS: ${SIM_BACKFILL_DAYS:-7}
       SIM_DIRTY_RATE: ${SIM_DIRTY_RATE:-0.05}
+      FLASH_CROWD_EVERY_MIN: ${FLASH_CROWD_EVERY_MIN:-20}
+      FLASH_CROWD_DURATION_MIN: ${FLASH_CROWD_DURATION_MIN:-5}
       SIM_LEDGER_PATH: ${SIM_LEDGER_PATH:-/shared/ledger/injection_ledger.jsonl}
     volumes:
       - shared_ledger:/shared/ledger

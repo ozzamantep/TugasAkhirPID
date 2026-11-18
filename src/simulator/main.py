@@ -9,7 +9,7 @@ from typing import Any, Dict, List
 import paho.mqtt.client as mqtt
 from pymongo import MongoClient
 
-from src.simulator.generator import TelemetrySimulator, WIB_OFFSET
+from src.simulator.generator import TelemetrySimulator, WIB_OFFSET, is_flash_crowd_active
 
 
 def _append_ledger(ledger_path: Path, entries: List[Dict[str, Any]]) -> None:
@@ -19,14 +19,6 @@ def _append_ledger(ledger_path: Path, entries: List[Dict[str, Any]]) -> None:
     with ledger_path.open("a", encoding="utf-8") as f:
         for entry in entries:
             f.write(json.dumps(entry) + "\n")
-
-
-def _is_scheduled_flash_crowd(ts_utc: datetime, flag_path: Path) -> bool:
-    """Trigger flash crowd during 10:00-10:15 WIB (KRS simulation) or when flag file exists."""
-    if flag_path.exists():
-        return True
-    wib = ts_utc + WIB_OFFSET
-    return wib.hour == 10 and 0 <= wib.minute < 15
 
 
 def run_backfill(
@@ -104,6 +96,8 @@ def run_stream(
     mqtt_host = os.getenv("MQTT_HOST", "mosquitto")
     mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
     flag_path = Path(os.getenv("FLASH_CROWD_FLAG", "/shared/ledger/flash_crowd.flag"))
+    every_min = float(os.getenv("FLASH_CROWD_EVERY_MIN", "20"))
+    duration_min = float(os.getenv("FLASH_CROWD_DURATION_MIN", "5"))
 
     client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2, client_id="campus-telemetry-simulator")
     while True:
@@ -116,12 +110,17 @@ def run_stream(
 
     client.loop_start()
     sim = TelemetrySimulator(seed=seed + 1000, dirty_rate=dirty_rate)
-    print(f"[stream] Publishing 24 devices every {interval_sec}s to {mqtt_host}:{mqtt_port}")
+    start_mono = time.monotonic()
+    print(
+        f"[stream] Publishing 24 devices every {interval_sec}s to {mqtt_host}:{mqtt_port} "
+        f"(flash_crowd: every={every_min}m, dur={duration_min}m)"
+    )
 
     try:
         while True:
             ts = datetime.now(timezone.utc)
-            flash = _is_scheduled_flash_crowd(ts, flag_path)
+            elapsed_sec = time.monotonic() - start_mono
+            flash = is_flash_crowd_active(elapsed_sec, ts, flag_path, every_min, duration_min)
             events, ledger = sim.generate_tick(ts, flash_crowd=flash, mode="stream")
             for ev in events:
                 topic = f"campus/telemetry/{ev['building_id']}/{ev['device_id']}"

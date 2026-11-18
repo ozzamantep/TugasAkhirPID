@@ -46,7 +46,9 @@ Sistem *pipeline* data *end-to-end* lokal berbasis Docker Compose untuk pemantau
 
 ## Simulasi Flash Crowd (Pendaftaran KRS)
 
-Untuk memicu *flash crowd* secara manual pada simulator *live*:
+Simulator mode *live* memiliki jadwal *flash crowd* otomatis yang dapat diatur lewat `.env` (`FLASH_CROWD_EVERY_MIN=20`, `FLASH_CROWD_DURATION_MIN=5`; isi `0` untuk mematikan). Setelah *warm-up* baseline normal, *flash crowd* otomatis aktif di akhir tiap siklus sehingga alert SLA dan panel **Anomali Trafik** terisi tanpa pemicu manual.
+
+Untuk memicu *flash crowd* secara manual kapan saja pada simulator *live*:
 ```bash
 docker exec pid-simulator touch /shared/ledger/flash_crowd.flag
 ```
