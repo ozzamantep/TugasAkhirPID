@@ -80,6 +80,13 @@ Berdasarkan eksekusi aktual Airflow DAG `campus_telemetry_etl` pada dataset *bac
 
 ## 6. Tiga Temuan Berbasis Data (Query Warehouse Nyata)
 
+> **Catatan Kejujuran Skenario Simulasi**: Seluruh temuan di bawah berasal dari data sintetis *seeded* (`SIM_SEED=42`). Pola gedung tertekan (`stressed_buildings`), jadwal *flash crowd* (`is_flash`), pembobotan jam kuliah (`_diurnal_factor`), serta perbedaan kapasitas *switch* inti `10 Gbps` vs fakultas `1 Gbps` (`max_bandwidth_mbps`) merupakan **parameter skenario** yang dikonfigurasi pada simulator:
+> - `src/simulator/main.py` (`run_backfill`): jadwal *flash crowd* (`day_idx in (2, 5)` pukul 10:00–10:25 WIB) dan `stressed_buildings` (`BLD-FEB`, `BLD-RECT`, `BLD-FT`).
+> - `src/simulator/generator.py` (`TelemetrySimulator`): `_diurnal_factor` dan `_building_stress_bias`.
+> - `src/simulator/topology.py` (`CAMPUS_DEVICES`) & `src/sql/mysql/01_master_schema.sql`: `max_bandwidth_mbps = 10000` pada `SW-RECT-01/02` vs `1000` pada *switch* fakultas.
+>
+> Dengan demikian, temuan berikut merupakan **bukti bahwa *pipeline* berhasil mendeteksi, mengagregasi, dan memeringkat kondisi yang disuntikkan**, bukan klaim fakta operasional jaringan kampus di dunia nyata.
+
 1. **Beban Jam Kuliah 2,45x Lebih Tinggi dari Luar Jam Kuliah**:
    - *Query*: `SELECT t.is_lecture_hour, ROUND(AVG(f.avg_port_in_mbps)::numeric, 2) AS avg_mbps, ROUND(AVG(f.avg_clients)::numeric, 1) AS avg_clients_per_ap FROM warehouse.fact_device_metric_hourly f JOIN warehouse.dim_time t ON f.time_key = t.time_key GROUP BY t.is_lecture_hour;`
    - *Hasil*: Jam kuliah (`t`) = **1.386,06 Mbps** (**32,4 klien/AP**); luar jam kuliah (`f`) = **564,91 Mbps** (**12,9 klien/AP**).
