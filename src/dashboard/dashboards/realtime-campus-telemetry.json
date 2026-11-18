@@ -99,15 +99,17 @@
       "id": 5,
       "type": "table",
       "title": "Alert Real-Time (Pelanggaran SLA, Heartbeat > 2 Menit, Anomali Trafik)",
-      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 16 },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "fieldConfig": {
         "overrides": [
-          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 165 }] },
-          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 90 }] },
-          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 110 }] },
-          { "matcher": { "id": "byName", "options": "jenis_alert" }, "properties": [{ "id": "custom.width", "value": 150 }] },
-          { "matcher": { "id": "byName", "options": "pesan" }, "properties": [{ "id": "custom.width", "value": 340 }] }
+          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 185 }] },
+          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 95 }] },
+          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 115 }] },
+          { "matcher": { "id": "byName", "options": "jenis_alert" }, "properties": [{ "id": "custom.width", "value": 170 }] },
+          { "matcher": { "id": "byName", "options": "tingkat" }, "properties": [{ "id": "custom.width", "value": 95 }] },
+          { "matcher": { "id": "byName", "options": "nilai" }, "properties": [{ "id": "custom.width", "value": 85 }] },
+          { "matcher": { "id": "byName", "options": "pesan" }, "properties": [{ "id": "custom.width", "value": 450 }] }
         ]
       },
       "targets": [
@@ -122,13 +124,17 @@
       "id": 6,
       "type": "table",
       "title": "Anomali Trafik (Moving Average 1 Jam +/- 3 Std)",
-      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 16 },
+      "description": "Anomali trafik (rata-rata bergerak 1 jam +/- 3 std) muncul setelah lonjakan trafik (mis. flash crowd) dan membutuhkan warm-up minimal 10 sampel.",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 24 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "fieldConfig": {
         "overrides": [
-          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 165 }] },
-          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 85 }] },
-          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 105 }] }
+          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 185 }] },
+          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 110 }] },
+          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 130 }] },
+          { "matcher": { "id": "byName", "options": "mbps" }, "properties": [{ "id": "custom.width", "value": 110 }] },
+          { "matcher": { "id": "byName", "options": "batas_atas" }, "properties": [{ "id": "custom.width", "value": 120 }] },
+          { "matcher": { "id": "byName", "options": "z_score" }, "properties": [{ "id": "custom.width", "value": 100 }] }
         ]
       },
       "targets": [
