@@ -153,6 +153,7 @@ class TelemetrySimulator:
         ts_utc: datetime,
         flash_crowd: bool = False,
         mode: str = "stream",
+        stressed_buildings: Tuple[str, ...] = (),
     ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
         """Generate one timestamp tick across all 24 devices."""
         if ts_utc.tzinfo is None:
@@ -170,12 +171,13 @@ class TelemetrySimulator:
                     continue
                 del self.missing_until[device.device_id]
 
+            is_stressed = flash_crowd or (device.building_id in stressed_buildings)
             event: Dict[str, Any] = {
                 "device_id": device.device_id,
                 "device_type": device.device_type,
                 "building_id": device.building_id,
                 "timestamp": ts_str,
-                "data": self._build_normal_data(device, load, flash_crowd),
+                "data": self._build_normal_data(device, load, is_stressed),
             }
             emitted, ledger = self._maybe_inject_dirty(event, ts_utc, ts_str, mode)
             all_events.extend(emitted)

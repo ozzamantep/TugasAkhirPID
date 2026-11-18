@@ -62,9 +62,20 @@ def run_backfill(
     for m in range(total_minutes):
         ts = start_utc + timedelta(minutes=m)
         wib = ts + WIB_OFFSET
-        # Simulate KRS flash crowd on day 3 & day 6 at 10:00-10:25 WIB
-        is_flash = (m // 1440 in (2, 5)) and (wib.hour == 10 and wib.minute < 25)
-        events, ledger = sim.generate_tick(ts, flash_crowd=is_flash, mode="backfill")
+        day_idx = m // 1440
+        # Campus-wide KRS flash crowd on day 2 & day 5 (10:00-10:25 WIB)
+        is_flash = (day_idx in (2, 5)) and (wib.hour == 10 and wib.minute < 25)
+        # Building-specific localized congestion so rankings & daily SLA trends differ realistically
+        stressed: List[str] = []
+        if day_idx in (1, 3, 4) and wib.hour == 13 and wib.minute < 35:
+            stressed.append("BLD-FEB")
+        if day_idx in (2, 4) and wib.hour == 14 and wib.minute < 20:
+            stressed.append("BLD-RECT")
+        if day_idx == 3 and wib.hour == 11 and wib.minute < 15:
+            stressed.append("BLD-FT")
+        events, ledger = sim.generate_tick(
+            ts, flash_crowd=is_flash, mode="backfill", stressed_buildings=tuple(stressed)
+        )
         for ev in events:
             ev["source"] = "backfill"
             batch.append(ev)
