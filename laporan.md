@@ -62,15 +62,15 @@ Setiap perangkat (total **24 perangkat** di **4 gedung**: `BLD-FIK`, `BLD-FT`, `
 
 ## 4. Ringkasan Data Quality (*Disisipkan vs Tertangkap*)
 
-Berdasarkan eksekusi aktual Airflow DAG `campus_telemetry_etl` pada dataset *backfill* 7 hari (**234.747 dokumen mentah** di MongoDB + *Injection Ledger* simulator):
+Berdasarkan eksekusi aktual Airflow DAG `campus_telemetry_etl` pada dataset *backfill* 7 hari (**MongoDB `raw_telemetry`** + *Injection Ledger* simulator):
 
 | Jenis Data Kotor | Disisipkan (*Ledger*) | Tertangkap | Ditangani | Tingkat Tangkapan (%) | Penanganan di Pipeline |
 |---|---:|---:|---:|---:|---|
-| `counter_reset` | 1.051 | 1.048 | 1.048 | 99,71% | Deteksi selisih negatif `errors`/`uptime_s`; hitung `errors_delta` dari baseline reset |
-| `duplicate_message` | 3.696 | 3.695 | 3.695 | 99,97% | Deduplikasi berdasarkan `(device_id, timestamp)` di Spark & Pandas ETL |
-| `inconsistent_unit` | 1.052 | 1.052 | 1.052 | 100,00% | Deteksi nilai `> 10.000` (bps); konversi `/ 1.000.000` ke Mbps |
-| `missing_heartbeat` | 3.676 | 3.598 | 3.598 | 97,88% | Deteksi jeda `> 120 detik` per perangkat; terbitkan alert `HEARTBEAT_MISSING` |
-| `out_of_range` | 2.705 | 2.705 | 2.705 | 100,00% | Validasi batas fisik (`loss` 0–100%, `latency >= 0`, `channel_util` 0–100%); karantina ke `NaN` |
+| `counter_reset` | 1.024 | 1.021 | 1.021 | 99,71% | Deteksi selisih negatif `errors`/`uptime_s`; hitung `errors_delta` dari baseline reset |
+| `duplicate_message` | 3.614 | 3.614 | 3.614 | 100,00% | Deduplikasi berdasarkan `(device_id, timestamp)` di Spark & Pandas ETL |
+| `inconsistent_unit` | 1.024 | 1.024 | 1.024 | 100,00% | Deteksi nilai `> 10.000` (bps); konversi `/ 1.000.000` ke Mbps |
+| `missing_heartbeat` | 3.603 | 3.535 | 3.535 | 98,11% | Deteksi jeda `> 120 detik` per perangkat; terbitkan alert `HEARTBEAT_MISSING` |
+| `out_of_range` | 2.652 | 2.651 | 2.651 | 99,96% | Validasi batas fisik (`loss` 0–100%, `latency >= 0`, `channel_util` 0–100%); karantina ke `NaN` |
 
 ## 5. Hasil Tantangan Signature (Pelanggaran SLA & Anomali Trafik)
 
@@ -80,15 +80,15 @@ Berdasarkan eksekusi aktual Airflow DAG `campus_telemetry_etl` pada dataset *bac
 
 ## 6. Tiga Temuan Berbasis Data (Query Warehouse Nyata)
 
-1. **Beban Jam Kuliah 2,43x Lebih Tinggi dari Luar Jam Kuliah**:
+1. **Beban Jam Kuliah 2,45x Lebih Tinggi dari Luar Jam Kuliah**:
    - *Query*: `SELECT t.is_lecture_hour, ROUND(AVG(f.avg_port_in_mbps)::numeric, 2) AS avg_mbps, ROUND(AVG(f.avg_clients)::numeric, 1) AS avg_clients_per_ap FROM warehouse.fact_device_metric_hourly f JOIN warehouse.dim_time t ON f.time_key = t.time_key GROUP BY t.is_lecture_hour;`
-   - *Hasil*: Jam kuliah (`t`) = **1.382,62 Mbps** (**32,3 klien/AP**); luar jam kuliah (`f`) = **568,30 Mbps** (**12,9 klien/AP**).
-2. **Gedung `BLD-FEB` dan `BLD-RECT` Mengalami Tekanan Tertinggi**:
-   - *Query*: `SELECT b.building_id, ROUND(AVG(f.avg_latency_ms)::numeric, 2) AS avg_lat_ms, ROUND(AVG(f.p95_latency_ms)::numeric, 2) AS avg_p95_ms, ROUND(AVG(f.avg_clients)::numeric, 1) AS avg_clients FROM warehouse.fact_device_metric_hourly f JOIN warehouse.dim_building b ON f.building_key = b.building_key GROUP BY b.building_id ORDER BY avg_p95_ms DESC;`
-   - *Hasil*: `BLD-FEB` mencatat rata-rata latensi p95 tertinggi (**38,82 ms**; rata-rata **32,92 ms**) dibanding `BLD-FT` (**37,72 ms**), `BLD-RECT` (**38,26 ms**), dan `BLD-FIK` (**36,91 ms**), sedangkan `BLD-RECT` memiliki kepadatan klien WiFi tertinggi (**24,7 klien/AP**).
-3. **Dampak Terukur *Flash Crowd* terhadap Ketersediaan SLA Harian**:
-   - *Query*: `SELECT f.date_wib, COUNT(*) AS total_windows, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS violations, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS sla_pct FROM warehouse.fact_sla_window f GROUP BY f.date_wib ORDER BY f.date_wib;`
-   - *Hasil*: Hari normal mencapai **100,00%** (0 pelanggaran dari 1.152 window/hari). Pada dua hari simulasi *flash crowd* KRS (`2026-11-14` dan `2026-11-17` WIB), terjadi masing-masing **20 pelanggaran SLA**, menurunkan ketersediaan SLA harian menjadi **98,26%** (total 7 hari **99,50%**).
+   - *Hasil*: Jam kuliah (`t`) = **1.386,06 Mbps** (**32,4 klien/AP**); luar jam kuliah (`f`) = **564,91 Mbps** (**12,9 klien/AP**).
+2. **`BLD-FEB` dan `BLD-RECT` Menjadi Gedung Paling Bermasalah Selama 7 Hari**:
+   - *Query*: `WITH alert_counts AS (SELECT building_key, COUNT(*) AS total_alert FROM warehouse.fact_alert GROUP BY building_key) SELECT b.building_id AS kode_gedung, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS window_melanggar, (COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) * 5) AS durasi_menit, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS sla_patuh_pct, COALESCE(a.total_alert, 0) AS total_alert, ROUND(AVG(f.p95_latency_ms)::numeric, 2) AS rata_p95_ms FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key LEFT JOIN alert_counts a ON a.building_key = b.building_key GROUP BY b.building_id, a.total_alert ORDER BY window_melanggar DESC, total_alert DESC, rata_p95_ms DESC;`
+   - *Hasil*: `BLD-FEB` peringkat 1 bermasalah (**31 window / 155 menit** melanggar, SLA **98,46%**, **955 alert**, rata-rata p95 **37,48 ms**), diikuti `BLD-RECT` (**18 window / 90 menit**, SLA **99,11%**, **933 alert**), `BLD-FT` (**13 window / 65 menit**, SLA **99,36%**, **894 alert**), dan `BLD-FIK` (**10 window / 50 menit**, SLA **99,50%**, **897 alert**). Trafik `BLD-RECT` (~2.500 Mbps) ~10x gedung fakultas (~227–256 Mbps) karena kapasitas *switch* inti `SW-RECT-01/02` adalah **10 Gbps** (`10.000` Mbps) dibanding **1 Gbps** (`1.000` Mbps) pada fakultas (bukan bug satuan bps/Mbps).
+3. **Dampak *Flash Crowd* KRS dan Kongesti Lokal terhadap Tren SLA Harian**:
+   - *Query*: `SELECT f.date_wib, b.building_id, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS pelanggaran, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS sla_pct FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key GROUP BY f.date_wib, b.building_id ORDER BY f.date_wib, b.building_id;`
+   - *Hasil*: Penurunan serentak pada **2026-11-14** dan **2026-11-17** (SLA turun ke **98,26%** di semua gedung, dan **96,88%** di `BLD-RECT` pada 11-14) disebabkan simulasi *flash crowd* pendaftaran KRS, sedangkan penurunan terpisah pada `BLD-FEB` (11-13, 11-15, 11-16: **97,57%**) dan `BLD-FT` (11-15: **98,96%**) berasal dari kongesti lokal jam sibuk.
 
 ## 7. Pernyataan Penggunaan AI Generatif
 
