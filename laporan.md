@@ -1,9 +1,9 @@
 # Laporan Proyek Akhir PID — Topik 5 Varian B: Jaringan Kampus (Network Telemetry)
 
 **Anggota Kelompok:**
-- `245150301111019` — Muhammad Dzakwan Ikram
-- `245150307111048` — Ryan Fadhlurrahman
-- `245150300111038` — Samuel Fransjemima
+- `245150300111038` — Samuel Fransjemima (*Eksekutor* — Ingestion & Streaming: `src/simulator`, `src/bridge`, `src/spark`)
+- `245150307111048` — Ryan Fadhlurrahman (*Kreatif / Pencetus Ide* — Dashboard & Integration: `src/dashboard`)
+- `245150301111019` — Muhammad Dzakwan Ikram (*Finisher* — Storage & Warehouse + Orchestration & Data Quality: `src/sql`, `src/dags`, ETL, `docker-compose.yml`, dokumentasi)
 
 ## 1. Diagram Arsitektur
 

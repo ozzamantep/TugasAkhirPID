@@ -2,7 +2,7 @@
 
 - **NIM**: 245150300111038
 - **Nama**: Samuel Fransjemima
-- **Peran**: Dashboard & Integration
+- **Peran**: Eksekutor — Ingestion & Streaming (`src/simulator`, `src/bridge`, `src/spark`)
 
 ## 1. Kontribusi Utama
 

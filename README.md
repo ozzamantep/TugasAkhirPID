@@ -4,11 +4,11 @@ Sistem *pipeline* data *end-to-end* lokal berbasis Docker Compose untuk pemantau
 
 ## Anggota Kelompok
 
-| NIM | Nama | Peran |
-|---|---|---|
-| `245150301111019` | Muhammad Dzakwan Ikram | Ingestion & Streaming |
-| `245150307111048` | Ryan Fadhlurrahman | Storage, Warehouse & Data Quality |
-| `245150300111038` | Samuel Fransjemima | Dashboard & Integration |
+| NIM | Nama | Peran Tim | Peran Teknis & Komponen |
+|---|---|---|---|
+| `245150300111038` | Samuel Fransjemima | Eksekutor | Ingestion & Streaming (`src/simulator`, `src/bridge`, `src/spark`) |
+| `245150307111048` | Ryan Fadhlurrahman | Kreatif / Pencetus Ide | Dashboard & Integration (`src/dashboard`) |
+| `245150301111019` | Muhammad Dzakwan Ikram | Finisher | Storage & Warehouse + Orchestration & Data Quality (`src/sql`, `src/dags`, `docker-compose.yml`, `README.md`, `laporan.md`, `slides.pdf`) |
 
 ## Arsitektur Singkat
 

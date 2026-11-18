@@ -2,7 +2,7 @@
 
 - **NIM**: 245150307111048
 - **Nama**: Ryan Fadhlurrahman
-- **Peran**: Storage, Warehouse & Data Quality
+- **Peran**: Kreatif / Pencetus Ide — Dashboard & Integration (`src/dashboard`)
 
 ## 1. Kontribusi Utama
 

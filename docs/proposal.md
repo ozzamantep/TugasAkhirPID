@@ -63,8 +63,8 @@ Setiap pesan memiliki field wajib `device_id`, `device_type`, `building_id`, `ti
 
 ## 4. Pembagian Peran (3 Anggota, 4 Peran)
 
-| Anggota (NIM & Nama) | Peran | Tanggung Jawab Utama | Komponen & Prefix Commit |
-|---|---|---|---|
-| `245150301111019` — **Muhammad Dzakwan Ikram** | **Ingestion & Streaming** | Simulator Python (live + backfill + dirty data + ledger), Mosquitto, Bridge MQTT-Kafka, Spark Structured Streaming | `sim:`, `bridge:`, `spark:` |
-| `245150307111048` — **Ryan Fadhlurrahman** | **Storage & Warehouse + Orchestration & Data Quality** | Master data MySQL, raw storage MongoDB, star schema PostgreSQL, Airflow DAG, ETL Pandas, pemeriksaan & rekonsiliasi 5 jenis data kotor | `wh:`, `dags:` |
-| `245150300111038` — **Samuel Fransjemima** | **Dashboard & Integration** | Provisioning Grafana (real-time & historis WIB), `docker-compose.yml`, integrasi *end-to-end*, dokumentasi | `dash:`, `docs:` |
+| Anggota (NIM & Nama) | Peran Tim | Peran Teknis | Tanggung Jawab Utama | Komponen & Prefix Commit |
+|---|---|---|---|---|
+| `245150300111038` — **Samuel Fransjemima** | Eksekutor | **Ingestion & Streaming** | Simulator Python (live + backfill + dirty data + ledger), Mosquitto, Bridge MQTT–Kafka, Spark Structured Streaming (`src/simulator`, `src/bridge`, `src/spark`) | `sim:`, `bridge:`, `spark:` |
+| `245150307111048` — **Ryan Fadhlurrahman** | Kreatif / Pencetus Ide | **Dashboard & Integration** | Provisioning Grafana (real-time & historis WIB) dan perancangan metrik/visualisasi (`src/dashboard`) | `dash:` |
+| `245150301111019` — **Muhammad Dzakwan Ikram** | Finisher | **Storage & Warehouse + Orchestration & Data Quality** | Master data MySQL, raw storage MongoDB, star schema PostgreSQL, Airflow DAG, ETL Pandas, pemeriksaan 5 jenis data kotor (`src/sql`, `src/dags`), serta `docker-compose.yml`, `README.md`, `laporan.md`, `slides.pdf` | `wh:`, `dags:`, `docs:` |
