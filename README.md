@@ -33,11 +33,12 @@ Sistem *pipeline* data *end-to-end* lokal berbasis Docker Compose untuk pemantau
    ```bash
    docker compose up -d --build
    ```
-3. Tunggu 1–2 menit hingga semua layanan berstatus `healthy` / `Up`:
+3. Tunggu **~3 menit** setelah `docker compose up` agar seluruh layanan `healthy`, *micro-batch* Spark Structured Streaming terisi, *baseline* *moving average* terbentuk, dan DAG Airflow selesai berjalan:
    ```bash
    docker compose ps
    ```
-4. Akses antarmuka web:
+4. Sebelum demo dasbor *real-time*, picu *flash crowd* agar alert SLA dan panel **Anomali Trafik** terisi (lihat bagian *Simulasi Flash Crowd* di bawah).
+5. Akses antarmuka web:
    - **Grafana**: http://localhost:3000 (`admin` / `admin`) → Folder **Jaringan Kampus (PID Topik 5)**
      - *Pemantauan Jaringan Kampus — Real-Time (WIB)*
      - *Analitik Historis & SLA Jaringan Kampus (7 Hari, WIB)*

@@ -4,7 +4,7 @@
   "timezone": "Asia/Jakarta",
   "refresh": "10s",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 2,
   "time": { "from": "now-1h", "to": "now" },
   "panels": [
     {
@@ -17,7 +17,7 @@
         {
           "refId": "A",
           "format": "time_series",
-          "rawSql": "SELECT window_end AS time, building_id AS metric, avg_port_in_mbps AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) ORDER BY 1"
+          "rawSql": "SELECT window_end AS time, building_id AS metric, avg_port_in_mbps AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) AND avg_port_in_mbps IS NOT NULL ORDER BY 1"
         }
       ]
     },
@@ -31,7 +31,7 @@
         {
           "refId": "A",
           "format": "time_series",
-          "rawSql": "SELECT window_end AS time, building_id AS metric, total_wifi_clients AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) ORDER BY 1"
+          "rawSql": "SELECT window_end AS time, building_id AS metric, total_wifi_clients AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) AND total_wifi_clients > 0 ORDER BY 1"
         }
       ]
     },
@@ -41,11 +41,27 @@
       "title": "Latensi p95 per Gedung (ms, Window 5 Menit — Batas SLA 100 ms)",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "ms",
+          "custom": {
+            "lineWidth": 2,
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 100 }
+            ]
+          }
+        }
+      },
       "targets": [
         {
           "refId": "A",
           "format": "time_series",
-          "rawSql": "SELECT window_end AS time, building_id AS metric, p95_latency_ms AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) ORDER BY 1"
+          "rawSql": "SELECT window_end AS time, building_id AS metric, p95_latency_ms AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) AND p95_latency_ms IS NOT NULL ORDER BY 1"
         }
       ]
     },
@@ -55,11 +71,27 @@
       "title": "Packet Loss Maksimum per Gedung (%, Window 5 Menit — Batas SLA 2%)",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "custom": {
+            "lineWidth": 2,
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        }
+      },
       "targets": [
         {
           "refId": "A",
           "format": "time_series",
-          "rawSql": "SELECT window_end AS time, building_id AS metric, max_packet_loss_pct AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) ORDER BY 1"
+          "rawSql": "SELECT window_end AS time, building_id AS metric, max_packet_loss_pct AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) AND max_packet_loss_pct IS NOT NULL ORDER BY 1"
         }
       ]
     },
@@ -71,10 +103,10 @@
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "fieldConfig": {
         "overrides": [
-          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 175 }] },
-          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 95 }] },
-          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 115 }] },
-          { "matcher": { "id": "byName", "options": "jenis_alert" }, "properties": [{ "id": "custom.width", "value": 155 }] },
+          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 165 }] },
+          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 90 }] },
+          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 110 }] },
+          { "matcher": { "id": "byName", "options": "jenis_alert" }, "properties": [{ "id": "custom.width", "value": 150 }] },
           { "matcher": { "id": "byName", "options": "pesan" }, "properties": [{ "id": "custom.width", "value": 340 }] }
         ]
       },
@@ -82,7 +114,7 @@
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT (alert_time AT TIME ZONE 'Asia/Jakarta') AS waktu_wib, building_id AS gedung, device_id AS perangkat, alert_type AS jenis_alert, severity AS tingkat, round(metric_value::numeric, 2) AS nilai, message AS pesan FROM streaming.realtime_alerts ORDER BY alert_time DESC LIMIT 50"
+          "rawSql": "SELECT alert_time AS waktu_wib, building_id AS gedung, device_id AS perangkat, alert_type AS jenis_alert, severity AS tingkat, round(metric_value::numeric, 2) AS nilai, message AS pesan FROM streaming.realtime_alerts ORDER BY alert_time DESC LIMIT 50"
         }
       ]
     },
@@ -92,11 +124,18 @@
       "title": "Anomali Trafik (Moving Average 1 Jam +/- 3 Std)",
       "gridPos": { "h": 8, "w": 10, "x": 14, "y": 16 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "fieldConfig": {
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "waktu_wib" }, "properties": [{ "id": "custom.width", "value": 165 }] },
+          { "matcher": { "id": "byName", "options": "gedung" }, "properties": [{ "id": "custom.width", "value": 85 }] },
+          { "matcher": { "id": "byName", "options": "perangkat" }, "properties": [{ "id": "custom.width", "value": 105 }] }
+        ]
+      },
       "targets": [
         {
           "refId": "A",
           "format": "table",
-          "rawSql": "SELECT (detected_at AT TIME ZONE 'Asia/Jakarta') AS waktu_wib, building_id AS gedung, device_id AS perangkat, round(port_in_mbps::numeric, 1) AS mbps, round(upper_band::numeric, 1) AS batas_atas, round(z_score::numeric, 2) AS z_score FROM streaming.traffic_anomalies ORDER BY detected_at DESC LIMIT 30"
+          "rawSql": "SELECT detected_at AS waktu_wib, building_id AS gedung, device_id AS perangkat, round(port_in_mbps::numeric, 1) AS mbps, round(upper_band::numeric, 1) AS batas_atas, round(z_score::numeric, 2) AS z_score FROM streaming.traffic_anomalies ORDER BY detected_at DESC LIMIT 30"
         }
       ]
     }

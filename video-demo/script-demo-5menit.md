@@ -1,5 +1,7 @@
 # Skrip Demo Video 5 Menit — Topik 5 Varian B (Jaringan Kampus)
 
+> **Persiapan sebelum merekam/demo**: Setelah `docker compose up -d --build`, tunggu **~3 menit** hingga seluruh layanan sehat, Spark selesai *warm-up*, dan Airflow DAG `campus_telemetry_etl` berstatus `success`.
+
 1. **[00:00 – 00:45] Pembukaan & Arsitektur**:
    - Perkenalkan tim, Topik 5 Varian B (Jaringan Kampus, 24 perangkat di 4 gedung).
    - Tunjukkan `docker compose ps` (semua service aktif dan *healthy*).

@@ -4,14 +4,43 @@
   "timezone": "Asia/Jakarta",
   "refresh": "1m",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "time": { "from": "now-7d", "to": "now" },
   "panels": [
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Gedung Paling Bermasalah Selama 7 Hari Terakhir (Peringkat SLA & Alert)",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "fieldConfig": {
+        "defaults": {
+          "custom": { "align": "auto", "inspect": false }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "kode_gedung" }, "properties": [{ "id": "custom.width", "value": 120 }] },
+          { "matcher": { "id": "byName", "options": "nama_gedung" }, "properties": [{ "id": "custom.width", "value": 280 }] },
+          { "matcher": { "id": "byName", "options": "window_melanggar" }, "properties": [{ "id": "custom.width", "value": 145 }] },
+          { "matcher": { "id": "byName", "options": "durasi_menit" }, "properties": [{ "id": "custom.width", "value": 125 }] },
+          { "matcher": { "id": "byName", "options": "pct_melanggar" }, "properties": [{ "id": "custom.width", "value": 125 }] },
+          { "matcher": { "id": "byName", "options": "sla_patuh_pct" }, "properties": [{ "id": "custom.width", "value": 125 }] },
+          { "matcher": { "id": "byName", "options": "total_alert" }, "properties": [{ "id": "custom.width", "value": 110 }] },
+          { "matcher": { "id": "byName", "options": "rata_p95_ms" }, "properties": [{ "id": "custom.width", "value": 120 }] }
+        ]
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "WITH alert_counts AS (SELECT building_key, COUNT(*) AS total_alert FROM warehouse.fact_alert GROUP BY building_key) SELECT b.building_id AS kode_gedung, b.building_name AS nama_gedung, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS window_melanggar, (COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) * 5) AS durasi_menit, ROUND(100.0 * COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) / COUNT(*), 2) AS pct_melanggar, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS sla_patuh_pct, COALESCE(a.total_alert, 0) AS total_alert, ROUND(AVG(f.p95_latency_ms)::numeric, 2) AS rata_p95_ms FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key LEFT JOIN alert_counts a ON a.building_key = b.building_key GROUP BY b.building_id, b.building_name, a.total_alert ORDER BY window_melanggar DESC, total_alert DESC, rata_p95_ms DESC"
+        }
+      ]
+    },
     {
       "id": 1,
       "type": "timeseries",
       "title": "Tren Ketersediaan SLA Harian per Gedung (% Waktu Patuh)",
-      "gridPos": { "h": 9, "w": 12, "x": 0, "y": 0 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 7 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "fieldConfig": {
         "defaults": {
@@ -34,39 +63,10 @@
       ]
     },
     {
-      "id": 2,
-      "type": "table",
-      "title": "Gedung Paling Bermasalah Selama 7 Hari Terakhir (Peringkat SLA & Alert)",
-      "gridPos": { "h": 9, "w": 12, "x": 12, "y": 0 },
-      "datasource": { "type": "postgres", "uid": "postgres-campus" },
-      "fieldConfig": {
-        "defaults": {
-          "custom": { "align": "auto", "inspect": false }
-        },
-        "overrides": [
-          { "matcher": { "id": "byName", "options": "kode_gedung" }, "properties": [{ "id": "custom.width", "value": 105 }] },
-          { "matcher": { "id": "byName", "options": "nama_gedung" }, "properties": [{ "id": "custom.width", "value": 230 }] },
-          { "matcher": { "id": "byName", "options": "window_melanggar" }, "properties": [{ "id": "custom.width", "value": 130 }] },
-          { "matcher": { "id": "byName", "options": "durasi_menit" }, "properties": [{ "id": "custom.width", "value": 110 }] },
-          { "matcher": { "id": "byName", "options": "pct_melanggar" }, "properties": [{ "id": "custom.width", "value": 115 }] },
-          { "matcher": { "id": "byName", "options": "sla_patuh_pct" }, "properties": [{ "id": "custom.width", "value": 115 }] },
-          { "matcher": { "id": "byName", "options": "total_alert" }, "properties": [{ "id": "custom.width", "value": 95 }] },
-          { "matcher": { "id": "byName", "options": "rata_p95_ms" }, "properties": [{ "id": "custom.width", "value": 110 }] }
-        ]
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "format": "table",
-          "rawSql": "WITH alert_counts AS (SELECT building_key, COUNT(*) AS total_alert FROM warehouse.fact_alert GROUP BY building_key) SELECT b.building_id AS kode_gedung, b.building_name AS nama_gedung, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS window_melanggar, (COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) * 5) AS durasi_menit, ROUND(100.0 * COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) / COUNT(*), 2) AS pct_melanggar, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS sla_patuh_pct, COALESCE(a.total_alert, 0) AS total_alert, ROUND(AVG(f.p95_latency_ms)::numeric, 2) AS rata_p95_ms FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key LEFT JOIN alert_counts a ON a.building_key = b.building_key GROUP BY b.building_id, b.building_name, a.total_alert ORDER BY window_melanggar DESC, total_alert DESC, rata_p95_ms DESC"
-        }
-      ]
-    },
-    {
       "id": 3,
       "type": "timeseries",
       "title": "Rata-Rata Trafik Masuk per Jam per Gedung (Mbps — BLD-RECT Core 10 Gbps)",
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 9 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 7 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "targets": [
         {
@@ -80,15 +80,15 @@
       "id": 4,
       "type": "table",
       "title": "Kualitas Data: Disisipkan vs Tertangkap (Ledger Rekonsiliasi)",
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 9 },
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 15 },
       "datasource": { "type": "postgres", "uid": "postgres-campus" },
       "fieldConfig": {
         "overrides": [
-          { "matcher": { "id": "byName", "options": "jenis_data_kotor" }, "properties": [{ "id": "custom.width", "value": 170 }] },
-          { "matcher": { "id": "byName", "options": "disisipkan" }, "properties": [{ "id": "custom.width", "value": 110 }] },
-          { "matcher": { "id": "byName", "options": "tertangkap" }, "properties": [{ "id": "custom.width", "value": 110 }] },
-          { "matcher": { "id": "byName", "options": "ditangani" }, "properties": [{ "id": "custom.width", "value": 110 }] },
-          { "matcher": { "id": "byName", "options": "persentase_tertangkap" }, "properties": [{ "id": "custom.width", "value": 150 }] }
+          { "matcher": { "id": "byName", "options": "jenis_data_kotor" }, "properties": [{ "id": "custom.width", "value": 220 }] },
+          { "matcher": { "id": "byName", "options": "disisipkan" }, "properties": [{ "id": "custom.width", "value": 150 }] },
+          { "matcher": { "id": "byName", "options": "tertangkap" }, "properties": [{ "id": "custom.width", "value": 150 }] },
+          { "matcher": { "id": "byName", "options": "ditangani" }, "properties": [{ "id": "custom.width", "value": 150 }] },
+          { "matcher": { "id": "byName", "options": "persentase_tertangkap" }, "properties": [{ "id": "custom.width", "value": 180 }] }
         ]
       },
       "targets": [
