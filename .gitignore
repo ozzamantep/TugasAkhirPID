@@ -1,0 +1,31 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Python & Virtual Environments
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node
+node_modules/
+
+# Database volumes, backfill dumps & logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
+logs/
+data/backfill/
+pgdata/
+mongodata/
+mysqldata/
+
+# Cleanup archives & OS residue
+.archive-cleanup/
+.DS_Store
+Thumbs.db

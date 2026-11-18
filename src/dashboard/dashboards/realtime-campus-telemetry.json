@@ -1,0 +1,95 @@
+{
+  "uid": "campus-realtime-wib",
+  "title": "Pemantauan Jaringan Kampus — Real-Time (WIB)",
+  "timezone": "Asia/Jakarta",
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Trafik Masuk Rata-Rata per Gedung (Mbps, Window 1 Menit)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT window_end AS time, building_id AS metric, avg_port_in_mbps AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Jumlah Klien WiFi per Gedung (Window 1 Menit)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT window_end AS time, building_id AS metric, total_wifi_clients AS value FROM streaming.window_metrics_1m WHERE $__timeFilter(window_end) ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Latensi p95 per Gedung (ms, Window 5 Menit — Batas SLA 100 ms)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT window_end AS time, building_id AS metric, p95_latency_ms AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Packet Loss Maksimum per Gedung (%, Window 5 Menit — Batas SLA 2%)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT window_end AS time, building_id AS metric, max_packet_loss_pct AS value FROM streaming.window_metrics_5m WHERE $__timeFilter(window_end) ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "table",
+      "title": "Alert Real-Time (Pelanggaran SLA, Heartbeat > 2 Menit, Anomali Trafik)",
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 16 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT (alert_time AT TIME ZONE 'Asia/Jakarta') AS waktu_wib, building_id AS gedung, device_id AS perangkat, alert_type AS jenis_alert, severity AS tingkat, round(metric_value::numeric, 2) AS nilai, message AS pesan FROM streaming.realtime_alerts ORDER BY alert_time DESC LIMIT 50"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "table",
+      "title": "Anomali Trafik (Moving Average 1 Jam +/- 3 Std)",
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 16 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT (detected_at AT TIME ZONE 'Asia/Jakarta') AS waktu_wib, building_id AS gedung, device_id AS perangkat, round(port_in_mbps::numeric, 1) AS mbps, round(upper_band::numeric, 1) AS batas_atas, round(z_score::numeric, 2) AS z_score FROM streaming.traffic_anomalies ORDER BY detected_at DESC LIMIT 30"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "uid": "campus-historical-wib",
+  "title": "Analitik Historis & SLA Jaringan Kampus (7 Hari, WIB)",
+  "timezone": "Asia/Jakarta",
+  "refresh": "1m",
+  "schemaVersion": 39,
+  "version": 1,
+  "time": { "from": "now-7d", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Tren Ketersediaan SLA Harian per Gedung (% Waktu Patuh)",
+      "gridPos": { "h": 8, "w": 14, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT (f.date_wib::timestamp AT TIME ZONE 'Asia/Jakarta') AS time, b.building_id AS metric, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS value FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key GROUP BY 1, 2 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Gedung Paling Bermasalah Selama 7 Hari Terakhir",
+      "gridPos": { "h": 8, "w": 10, "x": 14, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT b.building_id AS kode_gedung, b.building_name AS nama_gedung, COUNT(*) FILTER (WHERE NOT f.is_sla_compliant) AS window_melanggar_sla, ROUND(100.0 * SUM(CASE WHEN f.is_sla_compliant THEN 1 ELSE 0 END) / COUNT(*), 2) AS ketersediaan_sla_pct, ROUND(AVG(f.p95_latency_ms)::numeric, 2) AS rata_latensi_p95_ms FROM warehouse.fact_sla_window f JOIN warehouse.dim_building b ON f.building_key = b.building_key GROUP BY b.building_id, b.building_name ORDER BY window_melanggar_sla DESC"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Rata-Rata Trafik Masuk per Jam per Gedung (Mbps)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "time_series",
+          "rawSql": "SELECT t.full_timestamp_utc AS time, b.building_id AS metric, AVG(f.avg_port_in_mbps) AS value FROM warehouse.fact_device_metric_hourly f JOIN warehouse.dim_time t ON f.time_key = t.time_key JOIN warehouse.dim_building b ON f.building_key = b.building_key WHERE f.avg_port_in_mbps IS NOT NULL GROUP BY 1, 2 ORDER BY 1"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "table",
+      "title": "Kualitas Data: Disisipkan vs Tertangkap (Ledger Rekonsiliasi)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "datasource": { "type": "postgres", "uid": "postgres-campus" },
+      "targets": [
+        {
+          "refId": "A",
+          "format": "table",
+          "rawSql": "SELECT anomaly_type AS jenis_data_kotor, disisipkan_count AS disisipkan, tertangkap_count AS tertangkap, ditangani_count AS ditangani, capture_rate_pct AS persentase_tertangkap FROM warehouse.dq_reconciliation ORDER BY run_timestamp_utc DESC, anomaly_type LIMIT 10"
+        }
+      ]
+    }
+  ]
+}
